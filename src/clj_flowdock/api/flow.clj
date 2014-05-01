@@ -40,3 +40,6 @@
 
 (defn flow->flow-id [flow]
   (str (clojure.core/get-in flow ["organization" "parameterized_name"]) "/" (clojure.core/get flow "parameterized_name")))
+
+(defn flow-api-token [flow]
+  (clojure.core/get flow "api_token"))
