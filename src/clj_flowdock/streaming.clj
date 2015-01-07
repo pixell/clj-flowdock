@@ -19,10 +19,10 @@
     (.close reader)))
 
 (defn- flow-stream-url [flow-id]
-  (str "http://stream.flowdock.com/flows/" flow-id "?active=true"))
+  (str "https://stream.flowdock.com/flows/" flow-id "?active=true"))
 
 (defn- user-stream-url []
-  (str "http://stream.flowdock.com/flows/?active=true&user=1"))
+  (str "https://stream.flowdock.com/flows/?active=true&user=1"))
 
 (defn streaming-url [flow-id]
   (if (s/blank? flow-id)
