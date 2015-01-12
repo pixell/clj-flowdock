@@ -8,29 +8,37 @@
   (:refer-clojure :exclude [read]))
 
 (defprotocol Connection
+  (user-id [this] "Return identifier for user who opened the connection")
   (read [this] "Read from connection, returning a json map")
   (close [this] "Close connection"))
 
-(deftype FlowConnection [flow-id reader]
+(deftype FlowConnection [flow-ids user-id reader]
   Connection
+  (user-id [this]
+    user-id)
   (read [this]
     (json/parse-string (.readLine reader)))
   (close [this]
     (.close reader)))
 
-(defn- flow-stream-url [flow-id]
-  (str "https://stream.flowdock.com/flows/" flow-id "?active=true"))
+(defn- encode-url-params [params]
+  (let [encode #(java.net.URLEncoder/encode (str %) "UTF-8")
+        coded-params (for [[k v] params] (str k "=" v))]
+    (apply str (interpose "&" coded-params))))
 
-(defn- user-stream-url []
-  (str "https://stream.flowdock.com/flows/?active=true&user=1"))
+(defn- streaming-url [private flow-ids]
+  (let [url
+    (str "https://stream.flowdock.com/flows/?active=true"
+      (encode-url-params
+        (merge {}
+               (when-let [_ private] {"user" "1"})
+               (when-let [ids (not-empty flow-ids)] {"filter" (reduce #(str %1 "," %2) ids)}))))]
+    (log/info "url:" url)
+    url))
 
-(defn streaming-url [flow-id]
-  (if (s/blank? flow-id)
-    (user-stream-url)
-    (flow-stream-url flow-id)))
-
-(defn open [flow-id]
-  (let [response (client/get (streaming-url flow-id) {:as :stream :basic-auth api/basic-auth-token})]
-    (log/info "Streaming messages from:" flow-id)
-    (FlowConnection. flow-id (io/reader (:body response)))))
-
+(defn open
+  ([] (open true ()))
+  ([private & flow-ids]
+    (let [response (client/get (streaming-url private flow-ids) {:as :stream :basic-auth api/basic-auth-token})]
+      (log/info "Streaming messages from:" flow-ids)
+      (FlowConnection. flow-ids (get-in response [:headers "flowdock-user"]) (io/reader (:body response))))))
