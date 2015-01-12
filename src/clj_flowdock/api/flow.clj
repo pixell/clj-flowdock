@@ -8,11 +8,13 @@
 
 (def route "flows/")
 
-(defn list []
-  (api/http-get route))
+(defn list
+  ([] (list false))
+  ([users] (api/http-get route {:users (if users "1" "0")})))
 
-(defn list-all []
-  (api/http-get (str route "all")))
+(defn list-all
+  ([] (list-all false))
+  ([users] (api/http-get (str route "all") {:users (if users "1" "0")})))
 
 (defn find [key value]
   (first (filter #(.contains value (% key)) (list-all))))
