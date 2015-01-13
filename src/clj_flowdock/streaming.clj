@@ -28,9 +28,9 @@
 
 (defn- streaming-url [private flow-ids]
   (let [url
-    (str "https://stream.flowdock.com/flows/?active=true"
+    (str "https://stream.flowdock.com/flows/?"
       (encode-url-params
-        (merge {}
+        (merge {"active" "true"}
                (when-let [_ private] {"user" "1"})
                (when-let [ids (not-empty flow-ids)] {"filter" (reduce #(str %1 "," %2) ids)}))))]
     (log/info "url:" url)
